@@ -1,21 +1,22 @@
 NAME        := launch-proxy
-PLISTNAME   := me.lucky.launch-proxy.plist
 ADMINUID    := 501
+LAUNCHDIR   := /Library/LaunchDaemons
 
 prefix      ?= /usr/local
 exec_prefix ?= $(prefix)
 sbindir     ?= $(exec_prefix)/sbin
 datarootdir ?= $(prefix)/share
-datadir     ?= $(datarootdir)/$(NAME)
+datadir     ?= $(datarootdir)
 srcdir      ?= ./src
 
+plistname   := me.lucky.launch-proxy.plist
 targetdir   := ./target
 target      := $(targetdir)/$(NAME)
-destdir     := $(DESTDIR)$(sbindir)
-dest        := $(destdir)/$(NAME)
-plistfile   := ./plist/$(PLISTNAME)
-launchdir   := /Library/LaunchDaemons
-launchdest  := $(launchdir)/$(PLISTNAME)
+sbindestdir := $(DESTDIR)$(sbindir)
+datadestdir := $(DESTDIR)$(datadir)/$(NAME)
+sbindest    := $(sbindestdir)/$(NAME)
+plist       := ./plist/$(plistname)
+launchdest  := $(LAUNCHDIR)/$(plistname)
 
 all: build
 
@@ -23,20 +24,19 @@ build:
 	go build -o $(target) $(srcdir)/
 
 installdirs:
-	install -o $(ADMINUID) -g staff -d $(destdir)/
-	install -o $(ADMINUID) -g staff -d $(datadir)/
+	install -o $(ADMINUID) -g staff -d $(sbindestdir)/ $(datadestdir)/
 
 install: installdirs
-	install -o root -g wheel -f uchg $(target) $(destdir)/
-	install -m 0644 -o $(ADMINUID) -g staff $(plistfile) $(datadir)/
+	install -o root -g wheel -f uchg $(target) $(sbindestdir)/
+	install -m 0644 -o $(ADMINUID) -g staff $(plist) $(datadestdir)/
 
 uninstall:
-	chflags nouchg $(dest)
-	rm -f $(dest)
-	rm -rf $(datadir)/
+	chflags nouchg $(sbindest)
+	rm -f $(sbindest)
+	rm -rf $(datadestdir)/
 
 load:
-	install -m 0644 -o root -g wheel $(plistfile) $(launchdir)/
+	install -m 0644 -o root -g wheel $(plist) $(LAUNCHDIR)/
 	launchctl load $(launchdest)
 
 unload:
