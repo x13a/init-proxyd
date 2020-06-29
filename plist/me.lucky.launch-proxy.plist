@@ -12,19 +12,19 @@
     <array>
       <string>/usr/local/sbin/launch-proxy</string>
       <string>-d</string>
-      <string>127.0.0.1:5350</string>
+      <string>:5350</string>
     </array>
     <key>UserName</key>
     <string>nobody</string>
     <key>GroupName</key>
     <string>nogroup</string>
-    <key>StandardErrorPath</key>
-    <string>/usr/local/var/log/launch_proxy.log</string>
     <key>StandardOutPath</key>
-    <string>/usr/local/var/log/launch_proxy.log</string>
+    <string>/dev/null</string>
+    <key>StandardErrorPath</key>
+    <string>/dev/null</string>
     <key>Sockets</key>
     <dict>
-      <key>tcp</key>
+      <key>tcp4</key>
       <dict>
         <key>SockNodeName</key>
         <string>127.0.0.1</string>
@@ -37,7 +37,7 @@
         <key>SockProtocol</key>
         <string>TCP</string>
       </dict>
-      <key>udp</key>
+      <key>udp4</key>
       <dict>
         <key>SockNodeName</key>
         <string>127.0.0.1</string>
