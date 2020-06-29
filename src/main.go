@@ -1,10 +1,10 @@
 package main
 
 import (
+	"encoding/xml"
 	"flag"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"strings"
 	"time"
@@ -14,65 +14,114 @@ import (
 )
 
 const (
-	Version = "0.0.1"
+	Version = "0.1.0"
 
-	FlagNames       = "n"
+	FlagPlist       = "p"
 	FlagDestination = "d"
 	FlagTimeout     = "t"
 	FlagBufferSize  = "b"
 
-	TCP  = "tcp"
-	UDP  = "udp"
-	TCP6 = TCP + "6"
-	UDP6 = UDP + "6"
-
 	ExitSuccess = 0
 	ExitUsage   = 2
+
+	DefaultPlist = "/Library/LaunchDaemons/me.lucky.launch-proxy.plist"
 )
 
-func start(name string, noHost bool, opts *Opts) error {
+func start(name string, opts *Opts) error {
 	fds, err := launch.ActivateSocket(name)
 	if err != nil {
 		return err
 	}
-	dest := opts.dest
-	if noHost {
-		switch name {
-		case TCP6, UDP6:
-			dest = "[::1]" + dest
-		default:
-			dest = "127.0.0.1" + dest
-		}
-	}
-	name = name[:min(3, len(name))]
+	name = strings.ToLower(name)
+	isStream := strings.HasPrefix(name, proxy.TCP)
+	isPacket := strings.HasPrefix(name, proxy.UDP)
+	var prx proxy.Proxy
 	for _, fd := range fds {
-		switch name {
-		case TCP:
-			_, err = proxy.StartStream(fd, dest, opts.timeout)
-		case UDP:
-			_, err = proxy.StartPacket(fd, dest, opts.timeout, opts.bufSize)
+		switch {
+		case isStream:
+			prx, err = proxy.NewFileStream(fd, opts.dest, opts.timeout)
+		case isPacket:
+			prx, err = proxy.NewFilePacket(
+				fd,
+				opts.dest,
+				opts.timeout,
+				opts.bufSize,
+			)
 		default:
 			return fmt.Errorf("Invalid name: %q", name)
 		}
 		if err != nil {
 			return err
 		}
+		go func(prx proxy.Proxy) {
+			prx.Start()
+			<-prx.WaitChan()
+			log.Fatalln("Proxy exited")
+		}(prx)
 	}
 	return nil
 }
 
-func min(v ...int) int {
-	res := v[0]
-	for _, i := range v[1:] {
-		if i < res {
-			res = i
+func parsePlist(path string) ([]string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	dec := xml.NewDecoder(file)
+	const (
+		Key   = "key"
+		Array = "array"
+		Dict  = "dict"
+	)
+	depth := -1
+	found := false
+	res := []string{}
+Loop:
+	for {
+		token, err := dec.Token()
+		if err != nil {
+			return nil, err
+		}
+		switch element := token.(type) {
+		case xml.StartElement:
+			switch element.Name.Local {
+			case Key:
+				if (!found && depth != 0) || (found && depth != 1) {
+					continue
+				}
+				var key string
+				if err = dec.DecodeElement(&key, &element); err != nil {
+					log.Println(err)
+					continue
+				}
+				if !found {
+					if key == "Sockets" {
+						found = true
+					}
+				} else {
+					res = append(res, key)
+				}
+			case Array, Dict:
+				depth++
+			}
+		case xml.EndElement:
+			switch element.Name.Local {
+			case Array:
+				depth--
+			case Dict:
+				depth--
+				if found && depth == 0 {
+					break Loop
+				}
+			}
 		}
 	}
-	return res
+	return res, nil
 }
 
 type Opts struct {
-	names   []string
+	plist   string
 	dest    string
 	timeout time.Duration
 	bufSize int
@@ -82,11 +131,7 @@ func getOpts() *Opts {
 	opts := &Opts{}
 	isHelp := flag.Bool("h", false, "Print help and exit")
 	isVersion := flag.Bool("V", false, "Print version and exit")
-	names := flag.String(
-		FlagNames,
-		TCP+","+UDP,
-		fmt.Sprintf("Comma separated socket names { %s | %s }", TCP, UDP),
-	)
+	flag.StringVar(&opts.plist, FlagPlist, DefaultPlist, "Path to plist file")
 	flag.StringVar(&opts.dest, FlagDestination, "", "Destination address")
 	flag.DurationVar(
 		&opts.timeout,
@@ -109,7 +154,6 @@ func getOpts() *Opts {
 		fmt.Println(Version)
 		os.Exit(ExitSuccess)
 	}
-	opts.names = strings.Split(*names, ",")
 	if opts.dest == "" {
 		os.Stderr.WriteString("Empty destination\n")
 		os.Exit(ExitUsage)
@@ -119,12 +163,16 @@ func getOpts() *Opts {
 
 func main() {
 	opts := getOpts()
-	noHost := false
-	if host, _, err := net.SplitHostPort(opts.dest); err == nil && host == "" {
-		noHost = true
+	names, err := parsePlist(opts.plist)
+	if err != nil {
+		log.Fatalln(err)
 	}
-	for _, name := range opts.names {
-		if err := start(strings.TrimSpace(name), noHost, opts); err != nil {
+	if len(names) == 0 {
+		log.Fatalln("Socket names not found in", opts.plist)
+	}
+	log.Println("Found socket names:", names)
+	for _, name := range names {
+		if err := start(name, opts); err != nil {
 			log.Fatalln(err)
 		}
 	}
