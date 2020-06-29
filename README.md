@@ -1,13 +1,6 @@
 # launch-proxy
 
-Starting from version 2.0.43, `dnscrypt-proxy` can't drop privileges on macOS.
-To bind to 127.0.0.1:53 you need to use sudo. Where are two options: use, 
-for example, dnsmasq or use launch socket activation. It's last.
-
-Issue: [1371](https://github.com/DNSCrypt/dnscrypt-proxy/issues/1371)  
-Issue: [1367](https://github.com/DNSCrypt/dnscrypt-proxy/issues/1367)  
-
-History: [launch_socket_server](https://github.com/sstephenson/launch_socket_server)
+Launch daemon sockets proxy for macOS.
 
 ## Installation
 ```sh
@@ -29,8 +22,8 @@ Usage of launch-proxy:
   -d string
     	Destination address
   -h	Print help and exit
-  -n string
-    	Comma separated socket names { tcp | udp } (default "tcp,udp")
+  -p string
+    	Path to plist file (default "/Library/LaunchDaemons/me.lucky.launch-proxy.plist")
   -t duration
     	Timeout (default 8s)
 ```
@@ -52,3 +45,16 @@ The same using Makefile (will copy and remove plist for you):
 $ sudo make load
 $ sudo make unload
 ```
+
+## Caveats
+
+Proxy may not load under nobody:nogroup, then you need to change:
+```xml
+<key>UserName</key>
+<string>nobody</string>
+<key>GroupName</key>
+<string>nogroup</string>
+```
+
+## Friends
+- [launch_socket_server](https://github.com/sstephenson/launch_socket_server)
