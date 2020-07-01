@@ -166,17 +166,17 @@ func (p *StreamProxy) proxy(in net.Conn) {
 		return
 	}
 	defer out.Close()
-	errchan := make(chan error, 2)
+	errChan := make(chan error, 2)
 	go func() {
 		_, err := io.Copy(out, in)
-		errchan <- err
+		errChan <- err
 	}()
 	go func() {
 		_, err := io.Copy(in, out)
-		errchan <- err
+		errChan <- err
 	}()
-	for i, n := 0, cap(errchan); i < n; i++ {
-		if err = <-errchan; err != nil {
+	for i, n := 0, cap(errChan); i < n; i++ {
+		if err = <-errChan; err != nil {
 			log.Println(err)
 		}
 	}
