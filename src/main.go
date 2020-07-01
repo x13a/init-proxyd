@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	Version = "0.1.0"
+	Version = "0.1.1"
 
 	FlagPlist       = "p"
 	FlagDestination = "d"
@@ -39,9 +39,9 @@ func start(name string, opts *Opts) error {
 	for _, fd := range fds {
 		switch {
 		case isStream:
-			prx, err = proxy.NewFileStream(fd, opts.dest, opts.timeout)
+			prx, err = proxy.NewFileStreamProxy(fd, opts.dest, opts.timeout)
 		case isPacket:
-			prx, err = proxy.NewFilePacket(
+			prx, err = proxy.NewFilePacketProxy(
 				fd,
 				opts.dest,
 				opts.timeout,
@@ -172,7 +172,7 @@ func main() {
 	}
 	log.Println("Found socket names:", names)
 	for _, name := range names {
-		if err := start(name, opts); err != nil {
+		if err = start(name, opts); err != nil {
 			log.Fatalln(err)
 		}
 	}

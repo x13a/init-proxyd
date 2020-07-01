@@ -20,11 +20,11 @@ const (
 	DefaultBufferSize = 1 << 9
 )
 
-func NewFileStream(
+func NewFileStreamProxy(
 	fd int,
 	dest string,
 	timeout time.Duration,
-) (*Stream, error) {
+) (*StreamProxy, error) {
 	file, err := newFile(fd)
 	if err != nil {
 		return nil, err
@@ -34,15 +34,15 @@ func NewFileStream(
 	if err != nil {
 		return nil, err
 	}
-	return NewStream(ln, dest, timeout), nil
+	return NewStreamProxy(ln, dest, timeout), nil
 }
 
-func NewFilePacket(
+func NewFilePacketProxy(
 	fd int,
 	dest string,
 	timeout time.Duration,
 	bufSize int,
-) (*Packet, error) {
+) (*PacketProxy, error) {
 	file, err := newFile(fd)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func NewFilePacket(
 	if err != nil {
 		return nil, err
 	}
-	return NewPacket(pc, dest, timeout, bufSize), nil
+	return NewPacketProxy(pc, dest, timeout, bufSize), nil
 }
 
 func newFile(fd int) (*os.File, error) {
@@ -99,16 +99,20 @@ func prepareDestination(dest string, addr net.Addr) (network, address string) {
 
 type Proxy interface {
 	Start()
-	Close()
+	Close() error
 	WaitChan() <-chan struct{}
 }
 
-func NewStream(ln net.Listener, dest string, timeout time.Duration) *Stream {
+func NewStreamProxy(
+	ln net.Listener,
+	dest string,
+	timeout time.Duration,
+) *StreamProxy {
 	network, address := prepareDestination(dest, ln.Addr())
 	if timeout < 1 {
 		timeout = DefaultTimeout
 	}
-	return &Stream{
+	return &StreamProxy{
 		ln:       ln,
 		network:  network,
 		address:  address,
@@ -117,7 +121,7 @@ func NewStream(ln net.Listener, dest string, timeout time.Duration) *Stream {
 	}
 }
 
-type Stream struct {
+type StreamProxy struct {
 	ln       net.Listener
 	network  string
 	address  string
@@ -125,19 +129,19 @@ type Stream struct {
 	waitChan chan struct{}
 }
 
-func (p *Stream) Start() {
+func (p *StreamProxy) Start() {
 	go p.start()
 }
 
-func (p *Stream) Close() {
-	p.ln.Close()
+func (p *StreamProxy) Close() error {
+	return p.ln.Close()
 }
 
-func (p *Stream) WaitChan() <-chan struct{} {
+func (p *StreamProxy) WaitChan() <-chan struct{} {
 	return p.waitChan
 }
 
-func (p *Stream) start() {
+func (p *StreamProxy) start() {
 	defer p.ln.Close()
 	addr := p.ln.Addr()
 	network := addr.Network()
@@ -154,7 +158,7 @@ func (p *Stream) start() {
 	close(p.waitChan)
 }
 
-func (p *Stream) proxy(in net.Conn) {
+func (p *StreamProxy) proxy(in net.Conn) {
 	defer in.Close()
 	out, err := net.DialTimeout(p.network, p.address, p.timeout)
 	if err != nil {
@@ -206,12 +210,12 @@ func (m *connMap) Delete(key string) {
 	m.mu.Unlock()
 }
 
-func NewPacket(
+func NewPacketProxy(
 	pc net.PacketConn,
 	dest string,
 	timeout time.Duration,
 	bufSize int,
-) *Packet {
+) *PacketProxy {
 	network, address := prepareDestination(dest, pc.LocalAddr())
 	if timeout < 1 {
 		timeout = DefaultTimeout
@@ -219,7 +223,7 @@ func NewPacket(
 	if bufSize < 1 {
 		bufSize = DefaultBufferSize
 	}
-	return &Packet{
+	return &PacketProxy{
 		pc:       pc,
 		storage:  makeConnMap(),
 		network:  network,
@@ -230,7 +234,7 @@ func NewPacket(
 	}
 }
 
-type Packet struct {
+type PacketProxy struct {
 	pc       net.PacketConn
 	storage  connMap
 	network  string
@@ -240,19 +244,19 @@ type Packet struct {
 	waitChan chan struct{}
 }
 
-func (p *Packet) Start() {
+func (p *PacketProxy) Start() {
 	go p.start()
 }
 
-func (p *Packet) Close() {
-	p.pc.Close()
+func (p *PacketProxy) Close() error {
+	return p.pc.Close()
 }
 
-func (p *Packet) WaitChan() <-chan struct{} {
+func (p *PacketProxy) WaitChan() <-chan struct{} {
 	return p.waitChan
 }
 
-func (p *Packet) start() {
+func (p *PacketProxy) start() {
 	defer p.pc.Close()
 	addr := p.pc.LocalAddr()
 	network := addr.Network()
@@ -272,11 +276,11 @@ func (p *Packet) start() {
 	close(p.waitChan)
 }
 
-func (p *Packet) nextDeadline() time.Time {
+func (p *PacketProxy) nextDeadline() time.Time {
 	return time.Now().Add(p.timeout)
 }
 
-func (p *Packet) handle(data []byte, addr net.Addr) {
+func (p *PacketProxy) handle(data []byte, addr net.Addr) {
 	var err error
 	addrstr := addr.String()
 	out, ok := p.storage.Load(addrstr)
@@ -297,7 +301,7 @@ func (p *Packet) handle(data []byte, addr net.Addr) {
 	}
 }
 
-func (p *Packet) dial() (net.Conn, error) {
+func (p *PacketProxy) dial() (net.Conn, error) {
 	out, err := net.DialTimeout(p.network, p.address, p.timeout)
 	if err != nil {
 		return nil, err
@@ -309,7 +313,7 @@ func (p *Packet) dial() (net.Conn, error) {
 	return out, nil
 }
 
-func (p *Packet) proxy(out net.Conn, addr net.Addr) {
+func (p *PacketProxy) proxy(out net.Conn, addr net.Addr) {
 	defer func() {
 		p.storage.Delete(addr.String())
 		out.Close()
