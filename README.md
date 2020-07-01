@@ -48,7 +48,7 @@ $ sudo make unload
 
 ## Caveats
 
-Proxy may not load under nobody:nogroup, then you need to change:
+Proxy may not load under `nobody:nogroup`, then you need to change:
 ```xml
 <key>UserName</key>
 <string>nobody</string>
