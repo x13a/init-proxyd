@@ -2,13 +2,13 @@ package launch
 
 /*
 #include <errno.h>
+#include <launch.h>
 #include <stdlib.h>
-int launch_activate_socket(const char *name, int **fds, size_t *cnt);
+#include <string.h>
 */
 import "C"
 import (
 	"errors"
-	"strconv"
 	"unsafe"
 )
 
@@ -23,8 +23,8 @@ func ActivateSocket(name string) ([]int, error) {
 	defer C.free(unsafe.Pointer(cName))
 	var cFds *C.int
 	cCnt := C.size_t(0)
-	if err := C.launch_activate_socket(cName, &cFds, &cCnt); err != 0 {
-		switch err {
+	if ret := C.launch_activate_socket(cName, &cFds, &cCnt); ret != 0 {
+		switch ret {
 		case C.ENOENT:
 			return nil, ErrNotExist
 		case C.ESRCH:
@@ -32,7 +32,7 @@ func ActivateSocket(name string) ([]int, error) {
 		case C.EALREADY:
 			return nil, ErrAlreadyActivated
 		default:
-			return nil, errors.New("Unknown error: " + strconv.Itoa(int(err)))
+			return nil, errors.New(C.GoString(C.strerror(ret)))
 		}
 	}
 	ptr := unsafe.Pointer(cFds)
