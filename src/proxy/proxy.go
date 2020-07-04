@@ -142,6 +142,7 @@ func (p *StreamProxy) WaitChan() <-chan struct{} {
 }
 
 func (p *StreamProxy) start() {
+	defer close(p.waitChan)
 	defer p.ln.Close()
 	addr := p.ln.Addr()
 	network := addr.Network()
@@ -152,13 +153,12 @@ func (p *StreamProxy) start() {
 			log.Println(err)
 			break
 		}
-		go p.proxy(conn)
+		go p.handle(conn)
 	}
 	log.Printf("[%s] %s -> exit\n", network, addr)
-	close(p.waitChan)
 }
 
-func (p *StreamProxy) proxy(in net.Conn) {
+func (p *StreamProxy) handle(in net.Conn) {
 	defer in.Close()
 	out, err := net.DialTimeout(p.network, p.address, p.timeout)
 	if err != nil {
@@ -167,17 +167,20 @@ func (p *StreamProxy) proxy(in net.Conn) {
 	}
 	defer out.Close()
 	errChan := make(chan error, 2)
-	go func() {
-		_, err := io.Copy(out, in)
+	proxy := func(dst, src net.Conn) {
+		_, err := io.Copy(dst, src)
 		errChan <- err
-	}()
-	go func() {
-		_, err := io.Copy(in, out)
-		errChan <- err
-	}()
+	}
+	go proxy(out, in)
+	go proxy(in, out)
 	for i, n := 0, cap(errChan); i < n; i++ {
-		if err = <-errChan; err != nil {
-			log.Println(err)
+		select {
+		case err = <-errChan:
+			if err != nil {
+				log.Println(err)
+			}
+		case <-p.waitChan:
+			return
 		}
 	}
 }
@@ -257,6 +260,7 @@ func (p *PacketProxy) WaitChan() <-chan struct{} {
 }
 
 func (p *PacketProxy) start() {
+	defer close(p.waitChan)
 	defer p.pc.Close()
 	addr := p.pc.LocalAddr()
 	network := addr.Network()
@@ -273,7 +277,6 @@ func (p *PacketProxy) start() {
 		}
 	}
 	log.Printf("[%s] %s -> exit\n", network, addr)
-	close(p.waitChan)
 }
 
 func (p *PacketProxy) nextDeadline() time.Time {
@@ -314,9 +317,18 @@ func (p *PacketProxy) dial() (net.Conn, error) {
 }
 
 func (p *PacketProxy) proxy(out net.Conn, addr net.Addr) {
+	waitChan := make(chan struct{})
 	defer func() {
 		p.storage.Delete(addr.String())
 		out.Close()
+		close(waitChan)
+	}()
+	go func() {
+		select {
+		case <-p.waitChan:
+			out.Close()
+		case <-waitChan:
+		}
 	}()
 	buf := make([]byte, p.bufSize)
 	for {
