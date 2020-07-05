@@ -32,10 +32,6 @@
         <string>domain</string>
         <key>SockType</key>
         <string>stream</string>
-        <key>SockFamily</key>
-        <string>IPv4</string>
-        <key>SockProtocol</key>
-        <string>TCP</string>
       </dict>
       <key>udp4</key>
       <dict>
@@ -45,10 +41,6 @@
         <string>domain</string>
         <key>SockType</key>
         <string>dgram</string>
-        <key>SockFamily</key>
-        <string>IPv4</string>
-        <key>SockProtocol</key>
-        <string>UDP</string>
       </dict>
     </dict>
   </dict>
