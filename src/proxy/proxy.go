@@ -13,9 +13,6 @@ import (
 )
 
 const (
-	TCP = "tcp"
-	UDP = "udp"
-
 	DefaultTimeout    = 1 << 3 * time.Second
 	DefaultBufferSize = 1 << 9
 )
@@ -73,8 +70,8 @@ func prepareDestination(dest string, addr net.Addr) (network, address string) {
 	if network == "" {
 		network = addr.Network()
 	}
-	if !strings.HasPrefix(network, TCP) &&
-		!strings.HasPrefix(network, UDP) {
+	if !strings.HasPrefix(network, "tcp") &&
+		!strings.HasPrefix(network, "udp") {
 
 		return
 	}
@@ -201,10 +198,18 @@ func (m *connMap) Load(key string) (value net.Conn, ok bool) {
 	return
 }
 
-func (m *connMap) Store(key string, value net.Conn) {
+func (m *connMap) LoadOrStore(
+	key string,
+	value net.Conn,
+) (actual net.Conn, loaded bool) {
 	m.mu.Lock()
-	m.m[key] = value
+	actual, loaded = m.m[key]
+	if !loaded {
+		m.m[key] = value
+		actual = value
+	}
 	m.mu.Unlock()
+	return
 }
 
 func (m *connMap) Delete(key string) {
@@ -293,8 +298,12 @@ func (p *PacketProxy) handle(data []byte, addr net.Addr) {
 			log.Println(err)
 			return
 		}
-		p.storage.Store(addrstr, out)
-		go p.proxy(out, addr)
+		if out1, loaded := p.storage.LoadOrStore(addrstr, out); loaded {
+			out.Close()
+			out = out1
+		} else {
+			go p.proxy(out, addr)
+		}
 	}
 	if _, err = out.Write(data); err == nil {
 		err = out.SetReadDeadline(p.nextDeadline())

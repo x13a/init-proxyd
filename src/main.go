@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/xml"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"strings"
+	"strconv"
+	"syscall"
 	"time"
 
 	"./launch"
@@ -14,7 +16,7 @@ import (
 )
 
 const (
-	Version = "0.1.4"
+	Version = "0.1.5"
 
 	FlagPlist       = "p"
 	FlagDestination = "d"
@@ -32,15 +34,20 @@ func start(name string, opts *Opts) error {
 	if err != nil {
 		return err
 	}
-	name = strings.ToLower(name)
-	isStream := strings.HasPrefix(name, proxy.TCP)
-	isPacket := strings.HasPrefix(name, proxy.UDP)
-	var prx proxy.Proxy
 	for _, fd := range fds {
-		switch {
-		case isStream:
+		socketType, err := syscall.GetsockoptInt(
+			fd,
+			syscall.SOL_SOCKET,
+			syscall.SO_TYPE,
+		)
+		if err != nil {
+			return err
+		}
+		var prx proxy.Proxy
+		switch socketType {
+		case syscall.SOCK_STREAM:
 			prx, err = proxy.NewFileStreamProxy(fd, opts.dest, opts.timeout)
-		case isPacket:
+		case syscall.SOCK_DGRAM:
 			prx, err = proxy.NewFilePacketProxy(
 				fd,
 				opts.dest,
@@ -48,7 +55,8 @@ func start(name string, opts *Opts) error {
 				opts.bufSize,
 			)
 		default:
-			return fmt.Errorf("Invalid name: %q", name)
+			return errors.New("Unsupported socket type: " +
+				strconv.Itoa(socketType))
 		}
 		if err != nil {
 			return err
