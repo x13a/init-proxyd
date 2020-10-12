@@ -28,7 +28,7 @@ installdirs:
 
 install: installdirs
 	install -o root -g wheel -f uchg $(target) $(sbindestdir)/
-	install -m 0644 -o $(ADMINUID) -g staff $(plist) $(datadestdir)/
+	install -m 0644 -o $(ADMINUID) -g staff -b $(plist) $(datadestdir)/
 
 uninstall:
 	chflags nouchg $(sbindest)
