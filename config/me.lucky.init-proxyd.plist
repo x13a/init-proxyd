@@ -3,14 +3,14 @@
 <plist version="1.0">
   <dict>
     <key>Label</key>
-    <string>me.lucky.launch-proxy</string>
+    <string>me.lucky.init-proxyd</string>
     <key>KeepAlive</key>
     <true/>
     <key>RunAtLoad</key>
     <true/>
     <key>ProgramArguments</key>
     <array>
-      <string>/usr/local/sbin/launch-proxy</string>
+      <string>/usr/local/sbin/init-proxyd</string>
       <string>-d</string>
       <string>:5350</string>
     </array>

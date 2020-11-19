@@ -1,6 +1,7 @@
-NAME        := launch-proxy
+NAME        := init-proxyd
 ADMINUID    := 501
-LAUNCHDIR   := /Library/LaunchDaemons
+CONFIGDIR   := /Library/LaunchDaemons
+CONFIGNAME  := me.lucky.$(NAME).plist
 
 prefix      ?= /usr/local
 exec_prefix ?= $(prefix)
@@ -9,14 +10,13 @@ datarootdir ?= $(prefix)/share
 datadir     ?= $(datarootdir)
 srcdir      ?= ./src
 
-plistname   := me.lucky.launch-proxy.plist
 targetdir   := ./target
 target      := $(targetdir)/$(NAME)
 sbindestdir := $(DESTDIR)$(sbindir)
 datadestdir := $(DESTDIR)$(datadir)/$(NAME)
 sbindest    := $(sbindestdir)/$(NAME)
-plist       := ./plist/$(plistname)
-launchdest  := $(LAUNCHDIR)/$(plistname)
+config      := ./config/$(CONFIGNAME)
+configdest  := $(CONFIGDIR)/$(CONFIGNAME)
 
 all: build
 
@@ -28,7 +28,7 @@ installdirs:
 
 install: installdirs
 	install -o root -g wheel -f uchg $(target) $(sbindestdir)/
-	install -m 0644 -o $(ADMINUID) -g staff -b $(plist) $(datadestdir)/
+	install -m 0644 -o $(ADMINUID) -g staff -b $(config) $(datadestdir)/
 
 uninstall:
 	chflags nouchg $(sbindest)
@@ -36,12 +36,12 @@ uninstall:
 	rm -rf $(datadestdir)/
 
 load:
-	install -m 0644 -o root -g wheel $(plist) $(LAUNCHDIR)/
-	launchctl load $(launchdest)
+	install -m 0644 -o root -g wheel $(config) $(CONFIGDIR)/
+	launchctl load $(configdest)
 
 unload:
-	launchctl unload $(launchdest)
-	rm -f $(launchdest)
+	launchctl unload $(configdest)
+	rm -f $(configdest)
 
 clean:
 	rm -rf $(targetdir)/

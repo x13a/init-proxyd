@@ -1,4 +1,4 @@
-# launch-proxy
+# init-proxyd
 
 Launch daemon sockets proxy for macOS.
 
@@ -10,20 +10,20 @@ $ sudo make install
 or
 ```sh
 $ brew tap x31a/tap https://bitbucket.org/x31a/homebrew-tap.git
-$ brew install x31a/tap/launch-proxy
+$ brew install x31a/tap/init-proxyd
 ```
 
 ## Usage
 ```text
-Usage of launch-proxy:
+Usage of init-proxyd:
   -V	Print version and exit
   -b int
     	UDP buffer size (default 512)
+  -c string (launchd only)
+    	Path to config file (default "/Library/LaunchDaemons/me.lucky.init-proxyd.plist")
   -d string
     	Destination address
   -h	Print help and exit
-  -p string
-    	Path to plist file (default "/Library/LaunchDaemons/me.lucky.launch-proxy.plist")
   -t duration
     	Timeout (default 8s)
 ```
@@ -32,15 +32,15 @@ Usage of launch-proxy:
 
 To load:
 ```sh
-$ sudo launchctl load /Library/LaunchDaemons/me.lucky.launch-proxy.plist
+$ sudo launchctl load /Library/LaunchDaemons/me.lucky.init-proxyd.plist
 ```
 
 To unload:
 ```sh
-$ sudo launchctl unload /Library/LaunchDaemons/me.lucky.launch-proxy.plist
+$ sudo launchctl unload /Library/LaunchDaemons/me.lucky.init-proxyd.plist
 ```
 
-The same using Makefile (will copy and remove plist for you):
+The same using Makefile (will copy and remove config for you):
 ```sh
 $ sudo make load
 $ sudo make unload
