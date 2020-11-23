@@ -15,7 +15,7 @@ target      := $(targetdir)/$(NAME)
 sbindestdir := $(DESTDIR)$(sbindir)
 datadestdir := $(DESTDIR)$(datadir)/$(NAME)
 sbindest    := $(sbindestdir)/$(NAME)
-config      := ./config/$(CONFIGNAME)
+config      := ./config/launchd/$(CONFIGNAME)
 configdest  := $(CONFIGDIR)/$(CONFIGNAME)
 
 all: build

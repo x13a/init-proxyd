@@ -12,10 +12,11 @@ import (
 
 	"./launchd"
 	"./proxy"
+	"./systemd"
 )
 
 const (
-	Version = "0.1.7"
+	Version = "0.2.0"
 
 	FlagConfig      = "c"
 	FlagDestination = "d"
@@ -117,11 +118,16 @@ func main() {
 	switch {
 	case launchd.Is():
 		fds, err = launchd.Sockets(opts.config)
+	case systemd.Is():
+		fds, err = systemd.Sockets()
 	default:
 		log.Fatalln("Unsupported init system")
 	}
 	if err != nil {
 		log.Fatalln(err)
+	}
+	if len(fds) == 0 {
+		log.Fatalln("Sockets not found")
 	}
 	for _, fd := range fds {
 		if err = start(fd, opts); err != nil {

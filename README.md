@@ -1,6 +1,19 @@
 # init-proxyd
 
-Launch daemon sockets proxy for macOS.
+Init daemon socket activation proxy.
+
+Supported init systems:
+- launchd
+- systemd
+
+## Linux
+```text
+I didn't test it under linux.
+I didn't update Makefile for linux system.
+
+You need to build it yourself and include mock launchd files.
+Suppose it should work.
+```
 
 ## Installation
 ```sh

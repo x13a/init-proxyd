@@ -2,8 +2,6 @@ package launchd
 
 import (
 	"encoding/xml"
-	"errors"
-	"log"
 	"os"
 	"runtime"
 
@@ -23,9 +21,6 @@ func Sockets(config string) ([]int, error) {
 		names, err = getSocketNames(config)
 		if err != nil {
 			return nil, err
-		}
-		if len(names) == 0 {
-			return nil, errors.New("Socket names not found in " + config)
 		}
 	} else {
 		names = []string{"Socket"}
@@ -71,8 +66,7 @@ Loop:
 				}
 				var key string
 				if err = dec.DecodeElement(&key, &element); err != nil {
-					log.Println(err)
-					continue
+					return nil, err
 				}
 				if !found {
 					if key == "Sockets" {
