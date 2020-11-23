@@ -8,8 +8,8 @@ Supported init systems:
 
 ## Linux
 ```text
-I didn't test it under linux.
-I didn't update Makefile for linux system.
+I didn't test it on linux.
+I didn't update Makefile for linux.
 
 You need to build it yourself and include mock launchd files.
 Suppose it should work.
@@ -61,7 +61,7 @@ $ sudo make unload
 
 ## Caveats
 
-Proxy may not load under `nobody:nogroup`, then you need to change:
+Proxy may not load under `nobody:nogroup`, then you should change:
 ```xml
 <key>UserName</key>
 <string>nobody</string>
