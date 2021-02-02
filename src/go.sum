@@ -1,0 +1,4 @@
+github.com/x13a/go-launch v0.0.0-20210202053903-20d583aeaee5 h1:0e+w7CQ6mf+bU9C4YVT2/f5qv5kqTzEZ7Jme1vmJHf0=
+github.com/x13a/go-launch v0.0.0-20210202053903-20d583aeaee5/go.mod h1:kfVYr1hMcmOVxZt+2kFzCXf/YRX9Cz+F1QkijZQMaMM=
+github.com/x13a/go-proxy v0.0.0-20210202082418-55ebb12ee0c6 h1:BJmmRZQIC75bMRoyBWG2fWAVv7pnlOTSWmzZnL6sUG4=
+github.com/x13a/go-proxy v0.0.0-20210202082418-55ebb12ee0c6/go.mod h1:J/ViP98qsMKLyMLcZG326xZT5Da/sXP6/ylhxEB8x5g=

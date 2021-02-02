@@ -5,7 +5,7 @@ import (
 	"os"
 	"runtime"
 
-	"./launch"
+	"github.com/x13a/go-launch"
 )
 
 const DefaultConfig = "/Library/LaunchDaemons/me.lucky.init-proxyd.plist"

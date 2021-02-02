@@ -22,8 +22,8 @@ $ sudo make install
 ```
 or
 ```sh
-$ brew tap x31a/tap https://bitbucket.org/x31a/homebrew-tap.git
-$ brew install x31a/tap/init-proxyd
+$ brew tap x13a/tap
+$ brew install x13a/tap/init-proxyd
 ```
 
 ## Usage

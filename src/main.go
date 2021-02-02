@@ -10,9 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"./launchd"
-	"./proxy"
-	"./systemd"
+	"github.com/x13a/go-proxy"
+
+	"github.com/x13a/init-proxyd/launchd"
+	"github.com/x13a/init-proxyd/systemd"
 )
 
 const (

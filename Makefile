@@ -21,7 +21,8 @@ configdest  := $(CONFIGDIR)/$(CONFIGNAME)
 all: build
 
 build:
-	go build -o $(target) $(srcdir)/
+	# ugly fix :(
+	(cd $(srcdir); go build -o ../$(target) ".")
 
 installdirs:
 	install -o $(ADMINUID) -g staff -d $(sbindestdir)/ $(datadestdir)/

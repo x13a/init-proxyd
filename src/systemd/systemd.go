@@ -3,7 +3,7 @@ package systemd
 import (
 	"runtime"
 
-	"./sd"
+	"github.com/x13a/init-proxyd/systemd/sd"
 )
 
 const listenFdsStart = 3
