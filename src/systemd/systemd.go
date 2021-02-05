@@ -1,16 +1,8 @@
 package systemd
 
-import (
-	"runtime"
-
-	"github.com/x13a/init-proxyd/systemd/sd"
-)
+import "github.com/x13a/init-proxyd/systemd/sd"
 
 const listenFdsStart = 3
-
-func Is() bool {
-	return runtime.GOOS == "linux"
-}
 
 func Sockets() ([]int, error) {
 	cnt := sd.ListenFds(true)

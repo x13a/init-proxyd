@@ -6,15 +6,6 @@ Supported init systems:
 - launchd
 - systemd
 
-## Linux
-```text
-I didn't test it on linux.
-I didn't update Makefile for linux.
-
-You need to build it yourself and include mock launchd files.
-Suppose it should work.
-```
-
 ## Installation
 ```sh
 $ make
@@ -32,7 +23,7 @@ Usage of init-proxyd:
   -V	Print version and exit
   -b int
     	UDP buffer size (default 512)
-  -c string (launchd only)
+  -c string (darwin only)
     	Path to config file (default "/Library/LaunchDaemons/me.lucky.init-proxyd.plist")
   -d string
     	Destination address
@@ -43,17 +34,19 @@ Usage of init-proxyd:
 
 ## Example
 
-To load:
+To load (macOS):
 ```sh
+$ sudo install -m 0644 ./config/launchd/me.lucky.init-proxyd.plist /Library/LaunchDaemons/
 $ sudo launchctl load /Library/LaunchDaemons/me.lucky.init-proxyd.plist
 ```
 
-To unload:
+To unload (macOS):
 ```sh
 $ sudo launchctl unload /Library/LaunchDaemons/me.lucky.init-proxyd.plist
+$ sudo rm -f /Library/LaunchDaemons/me.lucky.init-proxyd.plist
 ```
 
-The same using Makefile (will copy and remove config for you):
+The same using Makefile (macOS only):
 ```sh
 $ sudo make load
 $ sudo make unload

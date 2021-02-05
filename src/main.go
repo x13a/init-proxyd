@@ -6,18 +6,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"strconv"
 	"syscall"
 	"time"
 
 	"github.com/x13a/go-proxy"
-
-	"github.com/x13a/init-proxyd/launchd"
-	"github.com/x13a/init-proxyd/systemd"
 )
 
 const (
-	Version = "0.2.0"
+	Version = "0.2.1"
 
 	FlagConfig      = "c"
 	FlagDestination = "d"
@@ -75,11 +73,11 @@ func getOpts() *Opts {
 	opts := &Opts{}
 	isHelp := flag.Bool("h", false, "Print help and exit")
 	isVersion := flag.Bool("V", false, "Print version and exit")
-	if launchd.Is() {
+	if runtime.GOOS == "darwin" {
 		flag.StringVar(
 			&opts.config,
 			FlagConfig,
-			launchd.DefaultConfig,
+			"/Library/LaunchDaemons/me.lucky.init-proxyd.plist",
 			"Path to config file",
 		)
 	}
@@ -106,7 +104,7 @@ func getOpts() *Opts {
 		os.Exit(ExitSuccess)
 	}
 	if opts.dest == "" {
-		os.Stderr.WriteString("Empty destination\n")
+		fmt.Fprintln(flag.CommandLine.Output(), "Empty destination")
 		os.Exit(ExitUsage)
 	}
 	return opts
@@ -114,16 +112,7 @@ func getOpts() *Opts {
 
 func main() {
 	opts := getOpts()
-	var fds []int
-	var err error
-	switch {
-	case launchd.Is():
-		fds, err = launchd.Sockets(opts.config)
-	case systemd.Is():
-		fds, err = systemd.Sockets()
-	default:
-		log.Fatalln("Unsupported init system")
-	}
+	fds, err := Sockets(opts.config)
 	if err != nil {
 		log.Fatalln(err)
 	}

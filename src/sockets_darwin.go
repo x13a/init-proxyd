@@ -1,18 +1,11 @@
-package launchd
+package main
 
 import (
 	"encoding/xml"
 	"os"
-	"runtime"
 
 	"github.com/x13a/go-launch"
 )
-
-const DefaultConfig = "/Library/LaunchDaemons/me.lucky.init-proxyd.plist"
-
-func Is() bool {
-	return runtime.GOOS == "darwin"
-}
 
 func Sockets(config string) ([]int, error) {
 	var names []string

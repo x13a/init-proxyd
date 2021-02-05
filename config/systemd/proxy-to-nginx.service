@@ -6,6 +6,6 @@ After=proxy-to-nginx.socket
 JoinsNamespaceOf=nginx.service
 
 [Service]
-ExecStart=/usr/local/sbin/init-proxyd -d :8080
+ExecStart=/usr/local/sbin/init-proxyd -d :8000
 PrivateTmp=yes
 PrivateNetwork=yes

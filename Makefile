@@ -1,5 +1,5 @@
 NAME        := init-proxyd
-ADMINUID    := 501
+
 CONFIGDIR   := /Library/LaunchDaemons
 CONFIGNAME  := me.lucky.$(NAME).plist
 
@@ -15,6 +15,7 @@ target      := $(targetdir)/$(NAME)
 sbindestdir := $(DESTDIR)$(sbindir)
 datadestdir := $(DESTDIR)$(datadir)/$(NAME)
 sbindest    := $(sbindestdir)/$(NAME)
+
 config      := ./config/launchd/$(CONFIGNAME)
 configdest  := $(CONFIGDIR)/$(CONFIGNAME)
 
@@ -25,19 +26,18 @@ build:
 	(cd $(srcdir); go build -o ../$(target) ".")
 
 installdirs:
-	install -o $(ADMINUID) -g staff -d $(sbindestdir)/ $(datadestdir)/
+	install -d $(sbindestdir)/ $(datadestdir)/
 
 install: installdirs
-	install -o root -g wheel -f uchg $(target) $(sbindestdir)/
-	install -m 0644 -o $(ADMINUID) -g staff -b $(config) $(datadestdir)/
+	install $(target) $(sbindestdir)/
+	install -m 0644 -b $(config) $(datadestdir)/
 
 uninstall:
-	chflags nouchg $(sbindest)
 	rm -f $(sbindest)
 	rm -rf $(datadestdir)/
 
 load:
-	install -m 0644 -o root -g wheel $(config) $(CONFIGDIR)/
+	install -m 0644 $(config) $(CONFIGDIR)/
 	launchctl load $(configdest)
 
 unload:
