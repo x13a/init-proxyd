@@ -1,6 +1,6 @@
 package systemd
 
-import "github.com/x13a/init-proxyd/systemd/sd"
+import "github.com/x13a/init-proxyd/sockets/systemd/sd"
 
 const listenFdsStart = 3
 

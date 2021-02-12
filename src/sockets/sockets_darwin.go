@@ -1,4 +1,4 @@
-package main
+package sockets
 
 import (
 	"encoding/xml"
@@ -7,7 +7,7 @@ import (
 	"github.com/x13a/go-launch"
 )
 
-func Sockets(config string) ([]int, error) {
+func Get(config string) ([]int, error) {
 	var names []string
 	var err error
 	if config != "-" {

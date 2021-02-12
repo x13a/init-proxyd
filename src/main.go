@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/x13a/go-proxy"
+
+	"github.com/x13a/init-proxyd/sockets"
 )
 
 const (
@@ -112,7 +114,7 @@ func getOpts() *Opts {
 
 func main() {
 	opts := getOpts()
-	fds, err := Sockets(opts.config)
+	fds, err := sockets.Get(opts.config)
 	if err != nil {
 		log.Fatalln(err)
 	}
