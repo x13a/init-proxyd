@@ -8,16 +8,16 @@ import (
 	"os"
 	"runtime"
 	"strconv"
-	"syscall"
 	"time"
 
 	"github.com/x13a/go-proxy"
+	"golang.org/x/sys/unix"
 
 	"github.com/x13a/init-proxyd/sockets"
 )
 
 const (
-	Version = "0.2.1"
+	Version = "0.2.2"
 
 	FlagConfig      = "c"
 	FlagDestination = "d"
@@ -29,20 +29,16 @@ const (
 )
 
 func start(fd int, opts *Opts) error {
-	syscall.CloseOnExec(fd)
-	socketType, err := syscall.GetsockoptInt(
-		fd,
-		syscall.SOL_SOCKET,
-		syscall.SO_TYPE,
-	)
+	unix.CloseOnExec(fd)
+	socketType, err := unix.GetsockoptInt(fd, unix.SOL_SOCKET, unix.SO_TYPE)
 	if err != nil {
 		return err
 	}
 	var prx proxy.Proxy
 	switch socketType {
-	case syscall.SOCK_STREAM:
+	case unix.SOCK_STREAM:
 		prx, err = proxy.NewFileStreamProxy(fd, opts.dest, opts.timeout)
-	case syscall.SOCK_DGRAM:
+	case unix.SOCK_DGRAM:
 		prx, err = proxy.NewFilePacketProxy(
 			fd,
 			opts.dest,
