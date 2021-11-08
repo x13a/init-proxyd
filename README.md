@@ -1,6 +1,6 @@
 # init-proxyd
 
-Init daemon socket activation proxy.
+Init daemons socket activation proxy.
 
 Supported init systems:
 - launchd
